@@ -43,6 +43,8 @@ class App:
             chrome_options = Options()
             chrome_options.add_argument("--window-size=1024,768")
             chrome_options.add_argument("--lang=en")
+            chrome_options.add_argument("user-data-dir=C:/Users/Bilal/AppData/Local/Google/Chrome/User Data")
+            chrome_options.add_argument("profile-directory=Profile 1")
             self.driver = webdriver.Chrome(options=chrome_options)
             self.driver.get(self.website)
             self.prompt_data['steps'].append(
@@ -56,7 +58,7 @@ class App:
 
         @self.app.route('/prompt', methods=['GET'])
         def prompt_get():
-            input("--------------PRESS KEY TO CONTINUE-------------")
+            #input("--------------PRESS KEY TO CONTINUE-------------")
             self.take_step()
             return jsonify(self.prompt_data)
 
