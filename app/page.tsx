@@ -6,12 +6,10 @@ import Head from 'next/head';
 import styles from '../styles/home.module.css';
 import LMMDropdown from './LMMDropdown';
 import { Image } from "@nextui-org/image";
-import { Input, Button } from '@nextui-org/react';
+import { Input, Button, Progress } from '@nextui-org/react';
 import Alert from '@mui/material/Alert';
 import {CircularProgress} from "@nextui-org/progress";
 import {Textarea} from "@nextui-org/input";
-import { maxWidth } from '@mui/system';
-import AppRouter from 'next/dist/client/components/app-router';
 
 
 export default function Home() {
@@ -61,17 +59,34 @@ export default function Home() {
     
     try {
       setLoading(true);
-      const response = await fetch(`http://127.0.0.1:5000/prompt?prompt=${encodedPrompt}&website=${encodedWebsite}`);
+      const response = await fetch(`http://127.0.0.1:5000/initial_step?prompt=${encodedPrompt}&website=${encodedWebsite}`);
       const body = await response.json();
-      const formattedSteps = body["steps"].map((step: { [s: string]: unknown; } | ArrayLike<unknown>, index: any) => {
-        return `* Step ${index} -> ${Object.values(step).join('\n-> ')}`;
+      const formattedThoughts = body.steps.map((step: { Thought: any; }, index: any) => {
+        return `* Step ${index} -> ${step.Thought}`;
       }).join('\n\n');
-      setlmmFeedback('* Step 0 -> '+Object.values(body["steps"][0]).join('\n-> '));
+      setlmmFeedback(formattedThoughts);
       const responseImage = await fetch(`http://127.0.0.1:5000/prompt_image`);
       const blob = await responseImage.blob();
       const imageSrc = URL.createObjectURL(blob);
       setImageSrc(imageSrc);
       setResponse('true');
+      while (true) {
+        const response = await fetch(`http://127.0.0.1:5000/prompt`);
+        const body = await response.json();
+        console.log(body);
+        const formattedThoughts = body.steps.map((step: { Thought: any; }, index: any) => {
+          return `* Step ${index} -> ${step.Thought}`;
+        }).join('\n\n');
+        setlmmFeedback(formattedThoughts);
+        if (body.steps[body.steps.length-1]["Action"].includes("ANSWER;")) {
+          break;
+        }
+        const responseImage = await fetch(`http://127.0.0.1:5000/prompt_image`);
+        const blob = await responseImage.blob();
+        const imageSrc = URL.createObjectURL(blob);
+        setImageSrc(imageSrc);
+      }
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -110,7 +125,7 @@ export default function Home() {
                 placeholder="Waiting on prompt..."
                 defaultValue=""
                 value={lmmFeedback}
-                className={styles.lmmFeedback}
+                className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-15 pr-4"
               />
             </div>
           </div>
@@ -145,6 +160,11 @@ export default function Home() {
               Surf
             </Button>}
           </div>
+          {isLoading && <Progress
+            size="sm"
+            isIndeterminate
+            aria-label="Loading..."
+          />}
         </div>
       </div>
     </div>
