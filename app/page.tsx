@@ -1,7 +1,7 @@
 // pages/index.tsx
 "use client"; // Add this at the top
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import Head from 'next/head';
 import styles from '../styles/home.module.css';
 import LMMDropdown from './LMMDropdown';
@@ -22,6 +22,7 @@ export default function Home() {
   const [imageSrc, setImageSrc] = useState('/logo.png');
   let [lmmFeedback, setlmmFeedback] = useState('');
   const [jsonData, setJsonData] = useState(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPrompt(e.target.value);
@@ -30,6 +31,13 @@ export default function Home() {
   const handleWebsiteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWebsite(e.target.value);
   };
+
+  useEffect(() => {
+    // Scroll to the bottom when messages are updated
+    if (textAreaRef.current) {
+      textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight;
+    }
+  }, [lmmFeedback]);
 
   const handleSubmit = async () => {
     // Handle the form submission logic
@@ -119,6 +127,7 @@ export default function Home() {
             <div className={styles.textAreaDiv}>
               <Textarea
                 isReadOnly
+                ref={textAreaRef}
                 label="LMM Feedback"
                 variant="bordered"
                 labelPlacement="outside"
