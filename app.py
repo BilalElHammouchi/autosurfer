@@ -20,8 +20,8 @@ class App:
 
     
     def setup_routes(self):
-        @self.app.route('/prompt', methods=['GET'])
-        def prompt_get():
+        @self.app.route('/initial_step', methods=['GET'])
+        def initial_step():
             self.prompt = request.args.get('prompt')
             self.website = request.args.get('website')
             print(f"{self.prompt = }")
@@ -47,20 +47,26 @@ class App:
             self.driver.get(self.website)
             self.prompt_data['steps'].append(
                 {
-                    self.steps: f"Website provided by the user. Launching the browser with this url: {self.website}"
+                    'Thought': f"Website provided by the user. Launching the browser with this url: {self.website}"
                 }
             )
             with open(f"{self.folder_name}/prompt.json", "w") as json_file:
                 json.dump(self.prompt_data, json_file)
+            return jsonify(self.prompt_data)
+
+        @self.app.route('/prompt', methods=['GET'])
+        def prompt_get():
+            input("--------------PRESS KEY TO CONTINUE-------------")
             self.take_step()
             return jsonify(self.prompt_data)
 
         @self.app.route('/prompt_image', methods=['GET'])
         def prompt_image_get():
+            self.draw_containers()
             return send_file(f"{self.folder_name}/{self.steps}.png", mimetype='image/png')
-    
 
-    def take_step(self):
+
+    def draw_containers(self):
         try:
             for containers in self.web_rects[0]:
                 self.driver.execute_script("arguments[0].remove();", containers)
@@ -69,17 +75,20 @@ class App:
         self.driver.execute_script("window.devicePixelRatio = 1")
         browser_info = fetch_browser_info(self.driver)
         accessibility_tree = fetch_page_accessibility_tree(browser_info, self.driver, current_viewport_only=True)
-        content, obs_nodes_info = parse_accessibility_tree(accessibility_tree)
-        content = clean_accesibility_tree(content)
+        self.content, obs_nodes_info = parse_accessibility_tree(accessibility_tree)
+        self.content = clean_accesibility_tree(self.content)
         self.web_rects = get_web_element_rect(self.driver)
         self.driver.save_screenshot(f'{self.folder_name}/{self.steps}.png')
-        """
+    
+
+    def take_step(self):
+        self.draw_containers()
         with open(f'{self.folder_name}/{self.steps}.png', 'rb') as file:
             self.steps += 1
-            content = content.replace('"', '\\"').replace("\n", "\\n").replace("\t", " ")
-            content = content.replace('\\xa0', '')
+            self.content = self.content.replace('"', '\\"').replace("\n", "\\n").replace("\t", " ")
+            self.content = self.content.replace('\\xa0', '')
             f = {
-                "task": f"Task: {self.prompt}. Accessibility tree: {content}.", 
+                "task": f"Task: {self.prompt}. Accessibility tree: {self.content}.", 
                 'system_prompt': SYSTEM_PROMPT_TREE.replace("\n", "\\n"), 
                 "image": base64.b64encode(file.read()).decode('utf-8')
             }
@@ -90,7 +99,7 @@ class App:
             print('Image uploaded successfully!')
             print(response.text)
             d = json.loads(response.text)
-            d['accessibility_tree'] = content
+            d['accessibility_tree'] = self.content
             self.prompt_data['steps'].append(d)
             with open(f"{self.folder_name}/prompt.json", "w") as json_file:
                 json.dump(self.prompt_data, json_file)
@@ -98,7 +107,6 @@ class App:
             self.execute_web()
         else:
             print('Error uploading image:', response.text)
-        """
 
 
     def execute_web(self):
@@ -120,11 +128,9 @@ class App:
             self.prompt_data['Answer'] = rest_str
             with open(f"{self.folder_name}/prompt.json", "w") as json_file:
                 json.dump(self.prompt_data, json_file)
-            self.driver.close()
-            self.destroy()
             return
-        input("--------------PRESS KEY TO CONTINUE-------------")
-        self.take_step()
+        #input("--------------PRESS KEY TO CONTINUE-------------")
+        #self.take_step()
 
 
     def parse_action(self, action):
