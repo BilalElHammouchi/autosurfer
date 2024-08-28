@@ -13,6 +13,23 @@ from flask_cors import CORS
 class App:
     def __init__(self, name):
         self.app = Flask(name)
+        self.sites = {
+            'Allrecipes': 'https://www.allrecipes.com/',
+            'Amazon': 'https://amazon.com/',
+            'Apple': 'https://www.apple.com/',
+            'ArXiv': 'https://arxiv.org/',
+            'BBC News': 'https://www.bbc.com/news',
+            'Booking': 'https://www.booking.com/',
+            'Cambridge Dictionary': 'https://dictionary.cambridge.org/',
+            'Coursera': 'https://www.coursera.org/',
+            'ESPN': 'https://www.espn.com/',
+            'GitHub': 'https://github.com/',
+            'Google Flights': 'https://www.google.com/travel/flights',
+            'Google Map': 'https://www.google.com/maps',
+            'Google Search': 'https://www.google.com/',
+            'Huggingface': 'https://huggingface.co/',
+            'Wolfram Alpha': 'https://www.wolframalpha.com/'
+        }
         CORS(self.app)
         self.steps = 0
         self.lmm_responses = []
@@ -46,15 +63,34 @@ class App:
             chrome_options.add_argument("user-data-dir=C:/Users/Bilal/AppData/Local/Google/Chrome/User Data")
             chrome_options.add_argument("profile-directory=Profile 1")
             self.driver = webdriver.Chrome(options=chrome_options)
-            self.driver.get(self.website)
-            self.prompt_data['steps'].append(
-                {
-                    'Thought': f"Website provided by the user. Launching the browser with this url: {self.website}"
-                }
-            )
+            if self.website != "":
+                self.driver.get(self.website)
+                self.prompt_data['steps'].append(
+                    {
+                        'Thought': f"Website provided by the user. Launching the browser with this url: {self.website}"
+                    }
+                )
+            else:
+                website_get()
+                self.driver.get(self.website)
+                self.prompt_data['steps'].append(
+                    {
+                        'Thought': f"Website determined by the surfer. Launching the browser with this url: {self.website}"
+                    }
+                )
             with open(f"{self.folder_name}/prompt.json", "w") as json_file:
                 json.dump(self.prompt_data, json_file)
             return jsonify(self.prompt_data)
+
+        def website_get():
+            response = requests.get(f'https://automation.promptify.com/webhook/prompt-retrieve?prompt={self.prompt}')
+            if response.status_code == 200:
+                print('Website determined successfully!')
+                print(response.text)
+                self.website = self.sites[json.loads(response.text)["site"]]
+                print(f'{self.website = }')
+            else:
+                print('Error uploading image:', response.text)
 
         @self.app.route('/prompt', methods=['GET'])
         def prompt_get():
