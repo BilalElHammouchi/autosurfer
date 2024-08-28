@@ -39,6 +39,11 @@ class App:
     def setup_routes(self):
         @self.app.route('/initial_step', methods=['GET'])
         def initial_step():
+            try:
+                self.driver.quit()
+                pass
+            except:
+                pass
             self.prompt = request.args.get('prompt')
             self.website = request.args.get('website')
             print(f"{self.prompt = }")
