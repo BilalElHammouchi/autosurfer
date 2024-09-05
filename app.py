@@ -4,6 +4,7 @@ from requests_toolbelt import MultipartEncoder
 import json
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 from browser import clean_accesibility_tree, fetch_browser_info, fetch_page_accessibility_tree, get_web_element_rect, parse_accessibility_tree
 from strings import SYSTEM_PROMPT, SYSTEM_PROMPT_TREE, WEBHOOK_URL
 import base64
@@ -165,8 +166,19 @@ class App:
                     self.driver.execute_script("window.scrollBy(0, 500);")
                 else:
                     self.driver.execute_script("window.scrollBy(0, -500);")
+            elif number_str == 'Numerical_Label':
+                if rest_str == 'down':
+                    self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollTop + 500;", self.web_rects[1][number_str])
+                else:
+                    self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollTop - 500;", self.web_rects[1][number_str])
         elif type_str == 'Google':
             self.driver.get('https://www.google.com/')
+        elif type_str == 'Wait':
+            WebDriverWait(self.driver, 10).until(
+                lambda driver: driver.execute_script('return document.readyState') == 'complete'
+            )
+        elif type_str == 'GoBack':
+            self.driver.back()
         elif type_str == 'ANSWER':
             self.prompt_data['Answer'] = rest_str
             with open(f"{self.folder_name}/prompt.json", "w") as json_file:
