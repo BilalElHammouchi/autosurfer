@@ -5,6 +5,7 @@ import json
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from browser import clean_accesibility_tree, fetch_browser_info, fetch_page_accessibility_tree, get_web_element_rect, parse_accessibility_tree
 from strings import SYSTEM_PROMPT, SYSTEM_PROMPT_TREE, WEBHOOK_URL
 import base64
@@ -158,6 +159,7 @@ class App:
         if type_str == 'Type':
             self.web_rects[1][number_str].clear()
             self.web_rects[1][number_str].send_keys(rest_str)
+            self.web_rects[1][number_str].send_keys(Keys.Enter)
         elif type_str == 'Click':
             self.web_rects[1][number_str].click()
         elif type_str == 'Scroll':
