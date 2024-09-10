@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, request, send_file, make_response, jsonify
 from requests_toolbelt import MultipartEncoder
 import json
@@ -53,7 +54,9 @@ class App:
             if not os.path.exists('tests'):
                 os.mkdir('tests')
             i = 0
-            self.folder_name = self.prompt.replace("'", "").replace(".", "")
+            invalid_chars = r'[<>:"/\\|?*]'
+            self.prompt = re.sub(invalid_chars, '_', self.prompt)
+            self.folder_name = self.prompt
             while os.path.exists(f"tests/{self.folder_name}-{i}"):
                 i += 1
             self.folder_name = f"tests/{self.folder_name}-{i}"
@@ -159,7 +162,7 @@ class App:
         if type_str == 'Type':
             self.web_rects[1][number_str].clear()
             self.web_rects[1][number_str].send_keys(rest_str)
-            self.web_rects[1][number_str].send_keys(Keys.Enter)
+            self.web_rects[1][number_str].send_keys(Keys.ENTER)
         elif type_str == 'Click':
             self.web_rects[1][number_str].click()
         elif type_str == 'Scroll':
